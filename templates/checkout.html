@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - Game Market{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2><i class="bi bi-credit-card"></i> Checkout</h2>
+        <p class="text-muted">Completa il tuo acquisto</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Riepilogo Ordine</h5>
+                
+                {% for item in cart_items %}
+                <div class="d-flex justify-content-between align-items-center py-2 {% if not loop.last %}border-bottom{% endif %}">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ item.image_url }}" alt="{{ item.title }}" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                        <div>
+                            <h6 class="mb-0">{{ item.title }}</h6>
+                            <small class="text-muted">{{ item.developer }}</small>
+                        </div>
+                    </div>
+                    <span class="fw-bold">€{{ "%.2f"|format(item.price) }}</span>
+                </div>
+                {% endfor %}
+                
+                <div class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top">
+                    <strong>Totale</strong>
+                    <strong class="text-success h4">€{{ "%.2f"|format(total) }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Pagamento</h5>
+                
+                <form id="payment-form">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" value="{{ session.user_email }}" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Informazioni Carta</label>
+                        <div id="card-element">
+                            <!-- Stripe Elements will create form elements here -->
+                        </div>
+                        <div id="card-errors" role="alert" class="text-danger mt-2"></div>
+                    </div>
+                    
+                    <button type="submit" id="submit-payment" class="btn btn-success w-100">
+                        <span id="button-text">
+                            <i class="bi bi-credit-card"></i> Paga €{{ "%.2f"|format(total) }}
+                        </span>
+                        <div id="spinner" class="spinner-border spinner-border-sm d-none" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </button>
+                </form>
+                
+                <div class="mt-3 text-center">
+                    <small class="text-muted">
+                        <i class="bi bi-shield-check"></i> I tuoi dati sono protetti da SSL
+                        <br><i class="bi bi-credit-card"></i> Powered by Stripe
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-info mt-3">
+            <h6><i class="bi bi-info-circle"></i> Cosa succede dopo?</h6>
+            <ul class="mb-0 small">
+                <li>Riceverai una conferma via email</li>
+                <li>I giochi saranno aggiunti alla tua libreria</li>
+                <li>Potrai scaricarli immediatamente</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+// Initialize Stripe
+const stripe = Stripe('{{ stripe_public_key }}');
+const elements = stripe.elements();
+
+// Create card element
+const cardElement = elements.create('card', {
+    style: {
+        base: {
+            fontSize: '16px',
+            color: '#424770',
+            '::placeholder': {
+                color: '#aab7c4',
+            },
+        },
+        invalid: {
+            color: '#9e2146',
+        },
+    },
+});
+
+cardElement.mount('#card-element');
+
+// Handle form submission
+const form = document.getElementById('payment-form');
+form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const {error, paymentMethod} = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardElement,
+        billing_details: {
+            email: document.getElementById('email').value,
+        },
+    });
+
+    if (error) {
+        // Show error to customer
+        const errorElement = document.getElementById('card-errors');
+        errorElement.textContent = error.message;
+    } else {
+        // Send paymentMethod.id to your server
+        fetch('/process_payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                payment_method_id: paymentMethod.id,
+                total: {{ total }},
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Redirect to success page or library
+                window.location.href = '/library?purchase_success=1';
+            } else {
+                // Show error
+                const errorElement = document.getElementById('card-errors');
+                errorElement.textContent = data.error || 'Si è verificato un errore durante il pagamento';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const errorElement = document.getElementById('card-errors');
+            errorElement.textContent = 'Si è verificato un errore durante il pagamento';
+        });
+    }
+});
+
+// Handle real-time validation errors from the card Element
+cardElement.on('change', ({error}) => {
+    const displayError = document.getElementById('card-errors');
+    if (error) {
+        displayError.textContent = error.message;
+    } else {
+        displayError.textContent = '';
+    }
+});
+</script>
+{% endblock %}

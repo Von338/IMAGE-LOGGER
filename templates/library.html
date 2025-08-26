@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}La Mia Libreria - Game Market{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2><i class="bi bi-collection"></i> La Mia Libreria</h2>
+        <p class="text-muted">Tutti i tuoi giochi acquistati in un posto</p>
+    </div>
+</div>
+
+{% if games %}
+<div class="row mt-4">
+    {% for game in games %}
+    <div class="col-lg-6 col-xl-4 mb-4">
+        <div class="card h-100">
+            <img src="{{ game.image_url }}" class="card-img-top" alt="{{ game.title }}" style="height: 200px; object-fit: cover;">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">{{ game.title }}</h5>
+                <p class="card-text text-muted small">{{ game.developer }}</p>
+                <p class="card-text flex-grow-1">{{ game.description[:80] }}{% if game.description|length > 80 %}...{% endif %}</p>
+                
+                <div class="mt-auto">
+                    <small class="text-muted">
+                        <i class="bi bi-calendar"></i> Acquistato il {{ game.purchase_date.split(' ')[0] if game.purchase_date else 'N/A' }}
+                    </small>
+                    
+                    <div class="d-grid gap-2 mt-2">
+                        <a href="{{ url_for('download_game', game_id=game.id) }}" class="btn btn-success">
+                            <i class="bi bi-download"></i> Scarica
+                        </a>
+                        <a href="{{ url_for('game_detail', game_id=game.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> Dettagli
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h5><i class="bi bi-info-circle"></i> Suggerimenti</h5>
+                <p class="mb-0">
+                    I tuoi giochi sono sempre disponibili per il download. 
+                    Puoi reinstallarli tutte le volte che vuoi!
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-collection display-1 text-muted"></i>
+    <h3 class="mt-3">La tua libreria è vuota</h3>
+    <p class="text-muted">Non hai ancora acquistato nessun gioco. Esplora il nostro catalogo!</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">
+        <i class="bi bi-shop"></i> Esplora il Catalogo
+    </a>
+</div>
+{% endif %}
+{% endblock %}
