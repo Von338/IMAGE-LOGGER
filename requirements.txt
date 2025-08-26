@@ -1,2 +1,4 @@
-requests
-httpagentparser
+Flask==2.3.3
+Werkzeug==2.3.7
+stripe==7.8.0
+sqlite3

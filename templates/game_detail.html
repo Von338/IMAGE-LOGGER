@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}{{ game.title }} - Game Market{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <img src="{{ game.image_url }}" class="card-img-top" alt="{{ game.title }}" style="height: 400px; object-fit: cover;">
+            <div class="card-body">
+                <h1 class="card-title">{{ game.title }}</h1>
+                <p class="text-muted mb-3">
+                    <i class="bi bi-building"></i> {{ game.developer }}
+                </p>
+                
+                <div class="mb-4">
+                    <h3>Descrizione</h3>
+                    <p class="lead">{{ game.description }}</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Informazioni</h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Sviluppatore:</strong> {{ game.developer }}</li>
+                            <li><strong>Data di rilascio:</strong> {{ game.created_at.split(' ')[0] if game.created_at else 'N/A' }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <h2 class="text-success">€{{ "%.2f"|format(game.price) }}</h2>
+                </div>
+                
+                {% if session.user_id %}
+                    {% if owns_game %}
+                        <div class="alert alert-success text-center">
+                            <i class="bi bi-check-circle"></i> Possiedi già questo gioco
+                        </div>
+                        <a href="{{ url_for('library') }}" class="btn btn-success w-100">
+                            <i class="bi bi-collection"></i> Vai alla Libreria
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('add_to_cart', game_id=game.id) }}" class="btn btn-primary w-100 mb-2">
+                            <i class="bi bi-cart-plus"></i> Aggiungi al Carrello
+                        </a>
+                        <p class="text-center text-muted small">
+                            <i class="bi bi-shield-check"></i> Pagamento sicuro con Stripe
+                        </p>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-info-circle"></i> Accedi per acquistare
+                    </div>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-box-arrow-in-right"></i> Accedi
+                    </a>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <h6>Cosa include:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check text-success"></i> Download immediato</li>
+                        <li><i class="bi bi-check text-success"></i> Aggiornamenti gratuiti</li>
+                        <li><i class="bi bi-check text-success"></i> Supporto completo</li>
+                        <li><i class="bi bi-check text-success"></i> Accesso permanente</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Screenshots placeholder -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6>Screenshot</h6>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <img src="{{ game.image_url }}" class="img-fluid rounded" alt="Screenshot 1">
+                    </div>
+                    <div class="col-6">
+                        <img src="{{ game.image_url }}" class="img-fluid rounded" alt="Screenshot 2">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Torna al Catalogo
+        </a>
+    </div>
+</div>
+{% endblock %}
